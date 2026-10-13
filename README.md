@@ -23,4 +23,4 @@ Também há um notebook, `PP2_1_Perceptron_Rosenblatt.ipynb`, que apresenta o c�
 - `PP2_1_Perceptron_Rosenblatt.ipynb`: relatório executável;
 - `requirements.txt`: dependências do projeto.
 
-Os dados originais permanecem em `../rna-2026.2-pp2.1/dados/`.
+Os arquivos de dados fornecidos ficam em `dados/`.
