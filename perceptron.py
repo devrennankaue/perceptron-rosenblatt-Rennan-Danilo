@@ -9,7 +9,7 @@ import numpy as np
 from sklearn.metrics import accuracy_score, confusion_matrix, f1_score, precision_score, recall_score
 
 
-DADOS = Path(__file__).resolve().parent.parent / "rna-2026.2-pp2.1" / "dados"
+DADOS = Path(__file__).resolve().parent / "dados"
 CORES = np.array(["tab:red", "tab:blue"])
 IDENTIFICADOR_EQUIPE = 0
 
@@ -18,6 +18,18 @@ def carregar_dados(nome_arquivo: str) -> Tuple[np.ndarray, np.ndarray]:
     """Lê um arquivo NumPy fornecido e devolve X=(x1,x2) e y=(0,1)."""
     dados = np.load(DADOS / nome_arquivo).reshape(-1, 3)
     return dados[:, :2].astype(float), dados[:, 2].astype(int)
+
+
+def normalizar(X: np.ndarray, escala: Optional[np.ndarray] = None) -> Tuple[np.ndarray, np.ndarray]:
+    """Divide cada atributo pelo seu maior valor absoluto, levando-o a [-1, 1]."""
+    if escala is None:
+        escala = np.abs(X).max(axis=0)
+    return X / escala, escala
+
+
+def pesos_escala_original(pesos: np.ndarray, escala: np.ndarray) -> np.ndarray:
+    """Converte pesos treinados em X/escala para o espaço original dos atributos."""
+    return np.concatenate(([pesos[0]], pesos[1:] / escala))
 
 
 def degrau(ativacao: np.ndarray) -> np.ndarray:
@@ -37,7 +49,7 @@ def treinar_perceptron(
     intervalo_pesos: Tuple[float, float] = (-0.5, 0.5),
     max_epocas: Optional[int] = None,
     embaralhar: bool = False,
-    semente: int | None = None,
+    semente: int | np.random.Generator | None = None,
     parar_na_convergencia: bool = True,
 ) -> Dict:
     """Treina pelo algoritmo online de Rosenblatt.
@@ -111,6 +123,7 @@ def executar_parte_1() -> Dict:
 def executar_parte_2(identificador: int = IDENTIFICADOR_EQUIPE) -> List[Dict]:
     """Executa os seis cenários exigidos, dez vezes cada, até convergirem."""
     X, y = carregar_dados(f"data{identificador}20262.txt")
+    X, _ = normalizar(X)
     configuracoes = [
         (taxa, intervalo)
         for taxa in (0.4, 0.1, 0.01)
@@ -119,7 +132,7 @@ def executar_parte_2(identificador: int = IDENTIFICADOR_EQUIPE) -> List[Dict]:
     resumo = []
     for numero, (taxa, intervalo) in enumerate(configuracoes):
         resultados = [
-            treinar_perceptron(X, y, taxa, intervalo, semente=numero * 10 + repeticao)
+            treinar_perceptron(X, y, taxa, intervalo, semente=1000 * numero + repeticao)
             for repeticao in range(10)
         ]
         ajustes = np.array([resultado["ajustes"] for resultado in resultados])
@@ -163,11 +176,14 @@ def executar_parte_3(identificador: int = IDENTIFICADOR_EQUIPE) -> Dict:
     treino, teste = indices[:corte], indices[corte:]
     X_treino, y_treino = X[treino], y[treino]
     X_teste, y_teste = X[teste], y[teste]
+    X_treino_norm, escala = normalizar(X_treino)
+    X_teste_norm, _ = normalizar(X_teste, escala)
     resultado = treinar_perceptron(
-        X_treino, y_treino, 0.1, (-0.5, 0.5), max_epocas=100,
-        embaralhar=True, semente=identificador, parar_na_convergencia=False,
+        X_treino_norm, y_treino, 0.1, (-0.5, 0.5), max_epocas=100,
+        embaralhar=True, semente=gerador, parar_na_convergencia=False,
     )
-    y_previsto = prever(X_teste, resultado["pesos"])
+    y_previsto = prever(X_teste_norm, resultado["pesos"])
+    pesos_originais = pesos_escala_original(resultado["pesos"], escala)
     metricas = {
         "matriz_confusao": confusion_matrix(y_teste, y_previsto, labels=[0, 1]),
         "acuracia": accuracy_score(y_teste, y_previsto),
@@ -182,8 +198,8 @@ def executar_parte_3(identificador: int = IDENTIFICADOR_EQUIPE) -> Dict:
     print(f"Revocação: {metricas['revocacao']:.2%}")
     print(f"F1-Score:  {metricas['fscore']:.2%}")
     fig, eixos = plt.subplots(1, 2, figsize=(15, 6), sharex=True, sharey=True)
-    plotar_reta(X_treino, y_treino, resultado["pesos"], eixos[0], "Parte III: treinamento")
-    plotar_reta(X_teste, y_teste, resultado["pesos"], eixos[1], "Parte III: teste")
+    plotar_reta(X_treino, y_treino, pesos_originais, eixos[0], "Parte III: treinamento")
+    plotar_reta(X_teste, y_teste, pesos_originais, eixos[1], "Parte III: teste")
     plt.tight_layout()
     plt.show()
     return {"resultado": resultado, "metricas": metricas, "dados": (X_treino, y_treino, X_teste, y_teste)}
