@@ -51,6 +51,7 @@ def treinar_perceptron(
     embaralhar: bool = False,
     semente: int | np.random.Generator | None = None,
     parar_na_convergencia: bool = True,
+    exibir_pesos_iniciais: bool = False,
 ) -> Dict:
     """Treina pelo algoritmo online de Rosenblatt.
 
@@ -61,7 +62,8 @@ def treinar_perceptron(
     X_bias = np.column_stack((np.ones(X.shape[0]), X))
     pesos = gerador.uniform(*intervalo_pesos, size=X_bias.shape[1])
     pesos_iniciais = pesos.copy()
-    print("Pesos iniciais:", pesos_iniciais)
+    if exibir_pesos_iniciais:
+        print("Pesos iniciais:", pesos_iniciais)
     ajustes = 0
     erros_por_epoca = []
     epoca = 0
@@ -109,7 +111,7 @@ def plotar_reta(X: np.ndarray, y: np.ndarray, pesos: np.ndarray, ax, titulo: str
 def executar_parte_1() -> Dict:
     """Resolve dataAll20262.txt até a convergência."""
     X, y = carregar_dados("dataAll20262.txt")
-    resultado = treinar_perceptron(X, y, taxa_aprendizado=0.1)
+    resultado = treinar_perceptron(X, y, taxa_aprendizado=0.1, exibir_pesos_iniciais=True)
     print("Pesos finais:", resultado["pesos"])
     print("Ajustes:", resultado["ajustes"])
     print("Épocas:", resultado["epocas"])
@@ -181,6 +183,7 @@ def executar_parte_3(identificador: int = IDENTIFICADOR_EQUIPE) -> Dict:
     resultado = treinar_perceptron(
         X_treino_norm, y_treino, 0.1, (-0.5, 0.5), max_epocas=100,
         embaralhar=True, semente=gerador, parar_na_convergencia=False,
+        exibir_pesos_iniciais=True,
     )
     y_previsto = prever(X_teste_norm, resultado["pesos"])
     pesos_originais = pesos_escala_original(resultado["pesos"], escala)
