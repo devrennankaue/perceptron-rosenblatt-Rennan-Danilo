@@ -17,6 +17,8 @@ python3 perceptron.py --parte 3
 
 Também há um notebook, `PP2_1_Perceptron_Rosenblatt.ipynb`, que apresenta o código, resultados e gráficos.
 
+Nas Partes II e III, os atributos são normalizados dividindo cada um pelo seu maior valor absoluto. Isso leva as entradas a uma escala comparável e evita que valores de até ±1000 dominem a atualização dos pesos em relação ao bias, cuja entrada é 1.
+
 ## Organização
 
 - `perceptron.py`: implementação do algoritmo e das três partes do projeto;

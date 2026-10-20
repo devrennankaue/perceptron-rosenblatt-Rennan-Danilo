@@ -61,6 +61,7 @@ def treinar_perceptron(
     X_bias = np.column_stack((np.ones(X.shape[0]), X))
     pesos = gerador.uniform(*intervalo_pesos, size=X_bias.shape[1])
     pesos_iniciais = pesos.copy()
+    print("Pesos iniciais:", pesos_iniciais)
     ajustes = 0
     erros_por_epoca = []
     epoca = 0
@@ -109,7 +110,6 @@ def executar_parte_1() -> Dict:
     """Resolve dataAll20262.txt até a convergência."""
     X, y = carregar_dados("dataAll20262.txt")
     resultado = treinar_perceptron(X, y, taxa_aprendizado=0.1)
-    print("Pesos iniciais:", resultado["pesos_iniciais"])
     print("Pesos finais:", resultado["pesos"])
     print("Ajustes:", resultado["ajustes"])
     print("Épocas:", resultado["epocas"])
